@@ -17,8 +17,7 @@ type Interface interface {
 	VirtV1alpha1() virtv1alpha1.VirtV1alpha1Interface
 }
 
-// Clientset contains the clients for groups. Each group has exactly one
-// version included in a Clientset.
+// Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
 	virtV1alpha1 *virtv1alpha1.VirtV1alpha1Client

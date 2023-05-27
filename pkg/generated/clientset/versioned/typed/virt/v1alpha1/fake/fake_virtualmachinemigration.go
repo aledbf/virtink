@@ -8,7 +8,6 @@ import (
 	v1alpha1 "github.com/smartxworks/virtink/pkg/apis/virt/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
@@ -20,9 +19,9 @@ type FakeVirtualMachineMigrations struct {
 	ns   string
 }
 
-var virtualmachinemigrationsResource = schema.GroupVersionResource{Group: "virt.virtink.smartx.com", Version: "v1alpha1", Resource: "virtualmachinemigrations"}
+var virtualmachinemigrationsResource = v1alpha1.SchemeGroupVersion.WithResource("virtualmachinemigrations")
 
-var virtualmachinemigrationsKind = schema.GroupVersionKind{Group: "virt.virtink.smartx.com", Version: "v1alpha1", Kind: "VirtualMachineMigration"}
+var virtualmachinemigrationsKind = v1alpha1.SchemeGroupVersion.WithKind("VirtualMachineMigration")
 
 // Get takes name of the virtualMachineMigration, and returns the corresponding virtualMachineMigration object, and an error if there is any.
 func (c *FakeVirtualMachineMigrations) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.VirtualMachineMigration, err error) {

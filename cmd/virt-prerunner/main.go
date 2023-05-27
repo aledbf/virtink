@@ -15,10 +15,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/docker/libnetwork/resolvconf"
-	"github.com/docker/libnetwork/types"
+	"github.com/moby/moby/libnetwork/resolvconf"
+	"github.com/moby/moby/libnetwork/types"
 	userspacecni "github.com/intel/userspace-cni-network-plugin/pkg/types"
-	netv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
+	//netv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	"github.com/namsral/flag"
 	"github.com/subgraph/libmacouflage"
 	"github.com/vishvananda/netlink"
@@ -201,14 +201,16 @@ func buildVMConfig(ctx context.Context, vm *virtv1alpha1.VirtualMachine) (*cloud
 		}
 	}
 
+	/*
 	networkStatusList := []netv1.NetworkStatus{}
 	if os.Getenv("NETWORK_STATUS") != "" {
 		if err := json.Unmarshal([]byte(os.Getenv("NETWORK_STATUS")), &networkStatusList); err != nil {
 			return nil, err
 		}
 	}
+	*/
 
-	for _, iface := range vm.Spec.Instance.Interfaces {
+for _, iface := range vm.Spec.Instance.Interfaces {
 		for networkIndex, network := range vm.Spec.Networks {
 			if network.Name != iface.Name {
 				continue
@@ -218,8 +220,6 @@ func buildVMConfig(ctx context.Context, vm *virtv1alpha1.VirtualMachine) (*cloud
 			switch {
 			case network.Pod != nil:
 				linkName = "eth0"
-			case network.Multus != nil:
-				linkName = fmt.Sprintf("net%d", networkIndex)
 			default:
 				return nil, fmt.Errorf("invalid source of network %q", network.Name)
 			}
@@ -242,6 +242,7 @@ func buildVMConfig(ctx context.Context, vm *virtv1alpha1.VirtualMachine) (*cloud
 					return nil, fmt.Errorf("setup masquerade network: %s", err)
 				}
 				vmConfig.Net = append(vmConfig.Net, &netConfig)
+				/*
 			case iface.SRIOV != nil:
 				for _, networkStatus := range networkStatusList {
 					if networkStatus.Interface == linkName && networkStatus.DeviceInfo != nil && networkStatus.DeviceInfo.Pci != nil {
@@ -252,6 +253,7 @@ func buildVMConfig(ctx context.Context, vm *virtv1alpha1.VirtualMachine) (*cloud
 						vmConfig.Devices = append(vmConfig.Devices, &sriovDeviceConfig)
 					}
 				}
+				*/
 			case iface.VhostUser != nil:
 				netConfig := cloudhypervisor.NetConfig{
 					Id:        iface.Name,

@@ -184,14 +184,9 @@ type Network struct {
 
 type NetworkSource struct {
 	Pod    *PodNetworkSource    `json:"pod,omitempty"`
-	Multus *MultusNetworkSource `json:"multus,omitempty"`
 }
 
 type PodNetworkSource struct {
-}
-
-type MultusNetworkSource struct {
-	NetworkName string `json:"networkName"`
 }
 
 // VirtualMachineStatus is the status for a VirtualMachine resource

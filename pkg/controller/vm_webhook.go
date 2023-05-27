@@ -16,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
+
 	virtv1alpha1 "github.com/smartxworks/virtink/pkg/apis/virt/v1alpha1"
 )
 
@@ -739,15 +740,7 @@ func ValidateNetworkSource(ctx context.Context, source *virtv1alpha1.NetworkSour
 		} else {
 			errs = append(errs, ValidatePodNetworkSource(ctx, source.Pod, fieldPath.Child("pod"))...)
 		}
-	}
-	if source.Multus != nil {
-		cnt++
-		if cnt > 1 {
-			errs = append(errs, field.Forbidden(fieldPath.Child("multus"), "may not specify more than 1 network source"))
-		} else {
-			errs = append(errs, ValidateMultusNetworkSource(ctx, source.Multus, fieldPath.Child("multus"))...)
-		}
-	}
+	}	
 	if cnt == 0 {
 		errs = append(errs, field.Required(fieldPath, "at least 1 network source is required"))
 	}

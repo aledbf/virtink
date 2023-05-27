@@ -628,8 +628,7 @@ func (r *VMReconciler) buildVMPod(ctx context.Context, vm *virtv1alpha1.VirtualM
 	}
 
 	var networks []netv1.NetworkSelectionElement
-	numOfUserspaceIface := 0
-	for i, network := range vm.Spec.Networks {
+	for _, network := range vm.Spec.Networks {
 		var iface *virtv1alpha1.Interface
 		for j := range vm.Spec.Instance.Interfaces {
 			if vm.Spec.Instance.Interfaces[j].Name == network.Name {
@@ -651,118 +650,6 @@ func (r *VMReconciler) buildVMPod(ctx context.Context, vm *virtv1alpha1.VirtualM
 				},
 				Command: []string{"sysctl", "-w", "net.ipv4.ip_forward=1"},
 			})
-		}
-
-		switch {
-		case network.Multus != nil:
-			networks = append(networks, netv1.NetworkSelectionElement{
-				Name:             network.Multus.NetworkName,
-				InterfaceRequest: fmt.Sprintf("net%d", i),
-				MacRequest:       iface.MAC,
-			})
-
-			var nad netv1.NetworkAttachmentDefinition
-			nadKey := types.NamespacedName{
-				Name:      network.Multus.NetworkName,
-				Namespace: vm.Namespace,
-			}
-			if err := r.Client.Get(ctx, nadKey, &nad); err != nil {
-				return nil, fmt.Errorf("get NAD: %s", err)
-			}
-
-			resourceName := nad.Annotations["k8s.v1.cni.cncf.io/resourceName"]
-			if resourceName != "" {
-				incrementContainerResource(&vmPod.Spec.Containers[0], resourceName)
-			}
-			vmPod.Spec.Containers[0].Env = append(vmPod.Spec.Containers[0].Env, corev1.EnvVar{
-				Name: "NETWORK_STATUS",
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						FieldPath: fmt.Sprintf("metadata.annotations['%s']", netv1.NetworkStatusAnnot),
-					},
-				},
-			})
-
-			if iface.VhostUser != nil {
-				type nadConfig struct {
-					Type                      string `json:"type"`
-					VhostUserSocketVolumeName string `json:"vhost_user_socket_volume_name,omitempty"`
-					VhostUserSocketName       string `json:"vhost_user_socket_name,omitempty"`
-				}
-
-				var cfg nadConfig
-				if err := json.Unmarshal([]byte(nad.Spec.Config), &cfg); err != nil {
-					return nil, fmt.Errorf("unmarshal NAD config: %s", err)
-				}
-
-				switch cfg.Type {
-				case "kube-ovn":
-					if vmPod.Spec.NodeSelector == nil {
-						vmPod.Spec.NodeSelector = map[string]string{}
-					}
-					vmPod.Spec.NodeSelector["ovn.kubernetes.io/ovs_dp_type"] = "userspace"
-					vmPod.Annotations["ovn-dpdk.default.ovn.kubernetes.io/mac_address"] = iface.MAC
-
-					vmPod.Spec.Volumes = append(vmPod.Spec.Volumes, corev1.Volume{
-						Name: cfg.VhostUserSocketVolumeName,
-						VolumeSource: corev1.VolumeSource{
-							EmptyDir: &corev1.EmptyDirVolumeSource{},
-						},
-					})
-					volumeMount := corev1.VolumeMount{
-						Name:      cfg.VhostUserSocketVolumeName,
-						MountPath: "/var/run/vhost-user",
-					}
-					vmPod.Spec.Containers[0].VolumeMounts = append(vmPod.Spec.Containers[0].VolumeMounts, volumeMount)
-
-					vmPod.Spec.Containers[0].Env = append(vmPod.Spec.Containers[0].Env,
-						corev1.EnvVar{
-							Name:  "VHOST_USER_SOCKET",
-							Value: fmt.Sprintf("/var/run/vhost-user/%s", cfg.VhostUserSocketName),
-						},
-						corev1.EnvVar{
-							Name:  "NET_TYPE",
-							Value: "kube-ovn",
-						},
-					)
-				case "userspace":
-					numOfUserspaceIface++
-					if numOfUserspaceIface == 1 {
-						vmPod.Spec.Volumes = append(vmPod.Spec.Volumes, corev1.Volume{
-							Name: "vhost-user-sockets",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/usr/local/var/run/openvswitch/",
-								},
-							},
-						})
-						volumeMount := corev1.VolumeMount{
-							Name:      "vhost-user-sockets",
-							MountPath: "/var/run/vhost-user",
-						}
-						vmPod.Spec.Containers[0].VolumeMounts = append(vmPod.Spec.Containers[0].VolumeMounts, volumeMount)
-
-						vmPod.Spec.Containers[0].Env = append(vmPod.Spec.Containers[0].Env,
-							corev1.EnvVar{
-								Name: "USERSPACE_CONFIGURATION_DATA",
-								ValueFrom: &corev1.EnvVarSource{
-									FieldRef: &corev1.ObjectFieldSelector{
-										FieldPath: "metadata.annotations['userspace/configuration-data']",
-									},
-								},
-							},
-							corev1.EnvVar{
-								Name:  "NET_TYPE",
-								Value: "userspace",
-							},
-						)
-					}
-				default:
-					return nil, fmt.Errorf("CNI plugin %s is not supported for vhost-uesr", cfg.Type)
-				}
-			}
-		default:
-			// ignored
 		}
 	}
 

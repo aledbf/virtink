@@ -1,6 +1,6 @@
 LOCALBIN ?= $(shell pwd)/bin
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-ENVTEST_K8S_VERSION = 1.23
+ENVTEST_K8S_VERSION = 1.26
 KIND ?= $(LOCALBIN)/kind
 CMCTL ?= $(LOCALBIN)/cmctl
 SKAFFOLD ?= $(LOCALBIN)/skaffold
@@ -39,7 +39,7 @@ $(KIND): $(LOCALBIN)
 .PHONY: kubectl
 kubectl: $(KUBECTL)
 $(KUBECTL): $(LOCALBIN)
-	curl -sLo $(KUBECTL) https://dl.k8s.io/release/v1.24.0/bin/$(GOOS)/$(GOARCH)/kubectl && chmod +x $(KUBECTL)
+	curl -sLo $(KUBECTL) https://dl.k8s.io/release/v1.26.0/bin/$(GOOS)/$(GOARCH)/kubectl && chmod +x $(KUBECTL)
 
 .PHONY: cmctl
 cmctl: $(CMCTL)
