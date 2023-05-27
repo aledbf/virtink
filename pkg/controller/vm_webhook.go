@@ -756,19 +756,6 @@ func ValidatePodNetworkSource(ctx context.Context, source *virtv1alpha1.PodNetwo
 	return errs
 }
 
-func ValidateMultusNetworkSource(ctx context.Context, source *virtv1alpha1.MultusNetworkSource, fieldPath *field.Path) field.ErrorList {
-	var errs field.ErrorList
-	if source == nil {
-		errs = append(errs, field.Required(fieldPath, ""))
-		return errs
-	}
-
-	if source.NetworkName == "" {
-		errs = append(errs, field.Required(fieldPath.Child("networkName"), ""))
-	}
-	return errs
-}
-
 func ValidateVMUpdate(ctx context.Context, vm *virtv1alpha1.VirtualMachine, oldVM *virtv1alpha1.VirtualMachine) field.ErrorList {
 	var errs field.ErrorList
 	tmpOldVM := oldVM.DeepCopy()

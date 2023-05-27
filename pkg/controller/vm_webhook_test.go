@@ -465,13 +465,6 @@ func TestValidateVM(t *testing.T) {
 			return vm
 		}(),
 		invalidFields: []string{"spec.networks[0]"},
-	}, {
-		vm: func() *virtv1alpha1.VirtualMachine {
-			vm := validVM.DeepCopy()
-			vm.Spec.Networks[0].NetworkSource.Multus = &virtv1alpha1.MultusNetworkSource{}
-			return vm
-		}(),
-		invalidFields: []string{"spec.networks[0].multus"},
 	}}
 
 	for _, tc := range tests {
